@@ -26,9 +26,9 @@ SECRET_KEY = 'x%&d4k0d31$nv@s%^s#n==wpe3_!qzo*ok7m&h@0y^=p2x4lew'
 DEBUG = True
 
 if DEBUG:
-    ALLOWED_HOSTS = ['localhost', '0.0.0.0']
+    ALLOWED_HOSTS = ['localhost', '0.0.0.0'] # Add your_server_domain_or_IP
 else:
-    ALLOWED_HOSTS = [] # Use your_server_domain_or_IP
+    ALLOWED_HOSTS = [] # Use only your_server_domain_or_IP
 
 # Application definition
 

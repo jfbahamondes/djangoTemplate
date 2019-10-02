@@ -181,7 +181,7 @@ pip install django gunicorn psycopg2
 
 #### Modificamos settings.py
 
-Como ya tenemos un dominio, podemos agregarlo a la lista ALLOWED_HOSTS de djando. De esta manera podremos luego probarla completamente subida.
+Como ya tenemos un dominio, podemos agregarlo a la lista ALLOWED_HOSTS de django. De esta manera podremos luego probarla completamente subida.
 
 #### Corremos las migraciones, y creamos un superuser
 
