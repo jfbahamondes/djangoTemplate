@@ -4,7 +4,15 @@
   <h2>Log In</h2>
   <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Log In</button>
+    {% for field in form %}
+      <p>
+        {{ field.label_tag }}<br>
+        {{ field }}
+        {% for error in field.errors %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endfor %}
+      </p>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Iniciar Sesion</button>
   </form>
 {% endblock %}
