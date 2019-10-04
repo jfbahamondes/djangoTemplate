@@ -1,0 +1,20 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2>Log In</h2>
+<div class="formContainer">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <p>
+            {{ field.label_tag }}<br>
+            {{ field }}
+            {% for error in field.errors %}
+            <div class="alert alert-danger">{{ error }}</div>
+            {% endfor %}
+        </p>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Iniciar Sesion</button>
+    </form>
+</div>
+{% endblock %}

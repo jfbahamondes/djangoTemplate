@@ -1,0 +1,8 @@
+.formContainer {
+  width: 30%;
+}
+@media (max-width: 924px) {
+    .formContainer{
+        width: 100%;
+    }
+}
