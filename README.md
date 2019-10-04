@@ -8,7 +8,7 @@ Tener en cuenta:
 - Python 3
 - Nginx
 - Host Name [.tk](http://www.dot.tk). También revisar Freenom.
-
+- [Documentación de Django, Nginx y Gunicorn](https://www.digitalocean.com/community/tutorials/how-to-set-up-django-with-postgres-nginx-and-gunicorn-on-ubuntu-16-04)
 ## 1 Creando el servido en AWS (EC2, Ubuntu)
 
 ### 1.1 Crear la instancia
@@ -96,7 +96,11 @@ Esto permitirá poder conectarse al servidor en el puerto 80 y 8000 para testear
     2. Name: WWW, Type: CNAME, TTL: lo mismo (3600), target: nombre-de-tu-dominio.extension (es el nombre de tu dominio y extesión, por ejemplo: mipagina.tk)
 5. Verificar que se creó el Host Name a través de [Cuál es mi IP](https://whatismyipaddress.com/hostname-ip). Debes ingresar tu dominio y ver si retorna tu IP elástica.
 
-## 3 Creando la app
+## 3 Creando la app en el servidor
+
+Estas son las variables que dependen de la implementación. Cambiar en todos los comandos y archivos que sea necesario.
+
+**djangoTemplante** = nombre de la carpeta contenedora del proyecto
 
 **myproject** = nombre del proyecto
 
@@ -104,11 +108,24 @@ Esto permitirá poder conectarse al servidor en el puerto 80 y 8000 para testear
 
 **password** = contraseña del usuario de postgres
 
+**myprojectenv** = nombre del ambiente pip
+
+**ubuntu** = nombre de usuario de la computadora
+
 ### 3.0 Clonamos el repo
 
 ```cmd
 git clone https://github.com/jfbahamondes/djangoTemplate.git
 ```
+
+Entramos a la carpeta y removemos .git
+
+```cmd
+cd djangoTemplate
+rm -r .git
+```
+
+De esta manera podemos luego crear un nuevo repo para controlar las versiones del proyecto.
 
 ### 3.1 Instalación de paquetes de los repositorios de Ubuntu
 
@@ -159,13 +176,6 @@ sudo -H pip3 install --upgrade pip
 sudo -H pip3 install virtualenv
 ```
 
-Creamos carpeta del proyecto y entramos
-
-```cmd
-mkdir ~/myproject
-cd ~/myproject
-```
-
 Dentro de la carpeta entonces creamos el ambiente y lo activamos
 
 ```cmd
@@ -182,6 +192,10 @@ pip install django gunicorn psycopg2
 #### Modificamos settings.py
 
 Como ya tenemos un dominio, podemos agregarlo a la lista ALLOWED_HOSTS de django. De esta manera podremos luego probarla completamente subida.
+
+```cmd
+nano myproject/settings.py
+```
 
 #### Corremos las migraciones, y creamos un superuser
 
@@ -217,3 +231,132 @@ python3 manage.py runserver 0.0.0.0:8000
 ```
 
 Chequear en [http://server_domain_or_IP:8000](http://localhost:8000)
+
+Probamos el servidor análogamente con gunicorn
+
+```cmd
+gunicorn --bind 0.0.0.0:8000 myproject.wsgi
+```
+
+Si todo está bien nos salimos del ambiente con el siguiente comando
+
+```cmd
+deactivate
+```
+
+## 4 Crear Gunicorn systemd Service File
+
+Como el template viene con el archivo necesario, lo pueden modificar para adaptar o si tienen la configuración por defecto, sólo mover. Dentro de la carpeta donde se encuentre el archivo **gunicorn.service** ejecutar:
+
+```cmd
+sudo mv gunicorn.service /etc/systemd/system/gunicorn.service
+```
+
+Ahora podemos comenzar el servicio Gunicorn. Estos comandos deberían crear un archivo .sock en la carpeta del projecto:
+
+```cmd
+sudo systemctl start gunicorn
+sudo systemctl enable gunicorn
+```
+
+En caso de algún **error** se puede chequear los logs de Gunicorn con el comando:
+
+```cmd
+sudo journalctl -u gunicorn
+```
+
+Si se hace algún cambio (puede ser para corregir un error por ejemplo) del archivo  */etc/systemd/system/gunicorn.service* se puede reiniciar el proceso de Gunicorn:
+
+```cmd
+sudo systemctl daemon-reload
+sudo systemctl restart gunicorn
+```
+
+## 5 Configure Nginx de Proxy Pass a Gunicorn
+
+Como el template viene con el archivo necesario, lo pueden modificar para adaptar o si tienen la configuración por defecto, sólo cambiar una línea y mover. Dentro de la carpeta donde se encuentre el archivo **myprojectNginx** ejecutar:
+
+```cmd
+nano myprojectNginx
+```
+
+**Cambiar la linea de *server_name***, donde se modifica *server_domain_or_IP* a cambio de tus Ips o Dominios, separados por una cosa. Luego se mueve el archivo:
+
+```cmd
+sudo mv myprojectNginx /etc/nginx/sites-available/myproject
+```
+
+Se activa ahora el sitio con la siguiente línea:
+
+```cmd
+sudo ln -s /etc/nginx/sites-available/myproject /etc/nginx/sites-enabled
+```
+
+En caso de algún **error** se puede chequear la configuración con el comando:
+
+```cmd
+sudo nginx -t
+```
+
+Si es que no hay errores se puede empezar el servicio con el comando:
+
+```cmd
+sudo systemctl restart nginx
+```
+
+Se abren los puertos necesarios de Nginx y se borra el 8000 de desarrollo.
+
+```cmd
+sudo ufw delete allow 8000
+sudo ufw allow 'Nginx Full'
+```
+
+LISTO! En caso de algún error con Nginx se puede ver los últimos errores:
+
+```cmd
+sudo tail -F /var/log/nginx/error.log
+```
+
+### Finalmente
+
+Si se cambia la app de Django
+
+```cmd
+sudo systemctl restart gunicorn
+```
+
+Si se cambia la configuración de Nginx, reiniciarla:
+
+```cmd
+sudo nginx -t && sudo systemctl restart nginx
+```
+
+## 6 Certificado HTTPS
+
+### 6.1 Agregar Certbot PPP
+
+```cmd
+sudo apt-get update
+sudo apt-get install software-properties-common
+sudo add-apt-repository universe
+sudo add-apt-repository ppa:certbot/certbot
+sudo apt-get update
+```
+
+### 6.2 Instalar Certbot
+
+```cmd
+sudo apt-get install certbot python-certbot-nginx
+```
+
+### 6.3 Correr y modificar nginx con Cerbot
+
+```cmd
+sudo certbot --nginx
+```
+
+### 6.4 Renovar automáticamente el certificado
+
+```cmd
+sudo certbot renew --dry-run
+```
