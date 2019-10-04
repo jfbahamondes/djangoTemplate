@@ -1,10 +1,10 @@
-{% extends 'layout.html' %}
+ {% extends 'layout.html' %}
 
 {% block content %}
-  <h2>Sign up</h2>
+  <h2>Log In</h2>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Sign up</button>
+    <button type="submit">Log In</button>
   </form>
 {% endblock %}

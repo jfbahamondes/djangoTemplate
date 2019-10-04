@@ -3,4 +3,13 @@ from django.shortcuts import render
 # Create your views here.
 
 def index(request):
-    return 'asd'
+    print(1)
+    print(1)
+    print(1)
+    print(1)
+    print(1)
+    print(1)
+    print(1)
+    print(1)
+    print(1)
+    return render(request, 'home/index.html')
